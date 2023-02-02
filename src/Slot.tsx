@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { hexOptions } from './hexOptions';
+import { hexOptions, HEX_OPTION_COUNT } from './hex';
 
 const CONTAINER_HEIGHT = 100;
 const CHARACTER_HEIGHT = 40;
@@ -8,14 +8,14 @@ const SPACING_HEIGHT = 30;
 const FULL_ITEM_HEIGHT = CHARACTER_HEIGHT + SPACING_HEIGHT;
 const MIDPOINT = CONTAINER_HEIGHT / 2 - CHARACTER_HEIGHT / 2;
 
-const ARRAY_LENGTH = hexOptions.length;
 const BASE_DURATION = 3;
 const BASE_ARRAY_REPEATS = 4;
-const ITEMS_PER_SECOND = (ARRAY_LENGTH * BASE_ARRAY_REPEATS) / BASE_DURATION;
-const END_DELAY = 1;
+const ITEMS_PER_SECOND =
+  (HEX_OPTION_COUNT * BASE_ARRAY_REPEATS) / BASE_DURATION;
+const END_DELAY_MULTIPLIER = 0.66;
 
 const START = -(
-  FULL_ITEM_HEIGHT * BASE_ARRAY_REPEATS * ARRAY_LENGTH -
+  FULL_ITEM_HEIGHT * BASE_ARRAY_REPEATS * HEX_OPTION_COUNT -
   MIDPOINT -
   FULL_ITEM_HEIGHT
 );
@@ -26,22 +26,16 @@ interface Props {
 }
 
 export const Slot: FC<Props> = ({ slot }) => {
-  const baseDelay = 0.4;
-  const delaySpeedup = 0.3;
-  const startDelay = slot * baseDelay - slot * delaySpeedup;
-  const endDelay = END_DELAY * slot;
+  const baseDelay = 0.25;
+  const startDelay = Math.pow(baseDelay, 1 / slot);
+  const endDelay = END_DELAY_MULTIPLIER * slot;
 
   const duration = BASE_DURATION + endDelay - startDelay;
 
-  const extraItemCount = Math.floor(endDelay * ITEMS_PER_SECOND);
-  const extraItems = new Array(extraItemCount)
+  const itemCount = Math.floor(duration * ITEMS_PER_SECOND);
+  const repeatedOptions = new Array(itemCount)
     .fill('0')
-    .map((_, index) => hexOptions[index % ARRAY_LENGTH]);
-
-  const repeatedOptions = new Array(BASE_ARRAY_REPEATS)
-    .fill(hexOptions)
-    .flat()
-    .concat(extraItems);
+    .map((_, index) => hexOptions[index % HEX_OPTION_COUNT]);
 
   return (
     <motion.div
