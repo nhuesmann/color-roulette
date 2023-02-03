@@ -1,44 +1,26 @@
-import { FC } from 'react';
-import { motion } from 'framer-motion';
-import { hexOptions, HEX_OPTION_COUNT } from './hex';
+import { FC, useEffect } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
+import { getAnimationValues } from './utils';
+import { CHARACTER_HEIGHT, CONTAINER_HEIGHT, END, START } from './constants';
+import type { SlotProps } from './types';
 
-const CONTAINER_HEIGHT = 100;
-const CHARACTER_HEIGHT = 40;
-const SPACING_HEIGHT = 30;
-const FULL_ITEM_HEIGHT = CHARACTER_HEIGHT + SPACING_HEIGHT;
-const MIDPOINT = CONTAINER_HEIGHT / 2 - CHARACTER_HEIGHT / 2;
+export const Slot: FC<SlotProps> = ({ slot, hexSymbol, isSpinning }) => {
+  const { duration, startDelay, shiftedArray } = getAnimationValues({
+    slot,
+    hexSymbol,
+  });
 
-const BASE_DURATION = 3;
-const BASE_ARRAY_REPEATS = 4;
-const ITEMS_PER_SECOND =
-  (HEX_OPTION_COUNT * BASE_ARRAY_REPEATS) / BASE_DURATION;
-const END_DELAY_MULTIPLIER = 0.66;
+  const controls = useAnimationControls();
 
-const START = -(
-  FULL_ITEM_HEIGHT * BASE_ARRAY_REPEATS * HEX_OPTION_COUNT -
-  MIDPOINT -
-  FULL_ITEM_HEIGHT
-);
-const END = MIDPOINT;
-
-interface Props {
-  slot: number;
-}
-
-export const Slot: FC<Props> = ({ slot }) => {
-  const baseDelay = 0.25;
-  const startDelay = Math.pow(baseDelay, 1 / slot);
-  const endDelay = END_DELAY_MULTIPLIER * slot;
-
-  const duration = BASE_DURATION + endDelay - startDelay;
-
-  const itemCount = Math.floor(duration * ITEMS_PER_SECOND);
-  const repeatedOptions = new Array(itemCount)
-    .fill('0')
-    .map((_, index) => hexOptions[index % HEX_OPTION_COUNT]);
+  useEffect(() => {
+    if (isSpinning) {
+      console.log('yo');
+      controls.start({ y: END });
+    }
+  }, [isSpinning]);
 
   return (
-    <motion.div
+    <div
       className="relative rounded-md flex justify-center bg-slate-600 overflow-hidden"
       style={{
         height: CONTAINER_HEIGHT,
@@ -46,16 +28,21 @@ export const Slot: FC<Props> = ({ slot }) => {
       }}
     >
       <motion.div
-        className="space-y-[30px] absolute"
+        className="space-y-[30px]"
+        // style={{ y: animatedY }}
         initial={{ y: START }}
-        animate={{ y: END }}
+        animate={controls}
         transition={{
-          duration: duration,
+          duration,
           delay: startDelay,
           ease: 'easeIn',
         }}
+        onAnimationComplete={() => {
+          console.log('onAnimationComplete');
+          // TODO: add this symbol to the hex code, should change bg
+        }}
       >
-        {repeatedOptions.map((hexValue, index) => (
+        {shiftedArray.map((hexValue, index) => (
           <div
             key={`${index}${hexValue}`}
             className="flex justify-center items-baseline"
@@ -67,7 +54,7 @@ export const Slot: FC<Props> = ({ slot }) => {
           </div>
         ))}
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
